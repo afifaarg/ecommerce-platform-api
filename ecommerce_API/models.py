@@ -25,6 +25,7 @@ class User(User):
     def __str__(self):
         return self.username
 
+
 # Category model
 class Category(models.Model):
     name = models.CharField(max_length=255, unique=True)
@@ -43,6 +44,7 @@ class Product(models.Model):
     cost_price = models.DecimalField(max_digits=10, decimal_places=2)
     margin = models.DecimalField(max_digits=10, decimal_places=2)
     tva = models.DecimalField(max_digits=5, decimal_places=2, default=0.00)
+    image = models.ImageField(upload_to='produit_images/')
     in_stock = models.BooleanField(default=True)
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -51,6 +53,11 @@ class Product(models.Model):
     def __str__(self):
         return self.name
 
+# Gallery model
+class ProductGallery(models.Model):
+    image = models.ImageField(upload_to='produit_images/')
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name="gallery_produits", default=None, null=True, blank=True)
+    
 # BuyingBill model
 class BuyingBill(models.Model):
     bill_id = models.CharField(max_length=50, unique=True)
@@ -110,6 +117,8 @@ class ReturnBill(models.Model):
     refunded = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
+
+########################### Marketing & Content management system Models #####################################################
 # HomeCarouselSection model
 class HomeCarouselSection(models.Model):
     image_desktop = models.ImageField(upload_to='carousel_images/')
