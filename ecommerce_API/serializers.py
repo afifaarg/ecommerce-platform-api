@@ -10,7 +10,7 @@ class ProductGallerySerializer(serializers.ModelSerializer):
     class Meta:
         model = ProductGallery
         fields = ['image']
-        
+
 class CategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = Category
@@ -47,10 +47,12 @@ class ProductSerializer(serializers.ModelSerializer):
 
     def get_image(self, obj):
         """Return the full URL for the product image."""
+        request = self.context.get('request')
         if obj.image:
-            return 'http://127.0.0.1:8000' + obj.image.url
+            return request.build_absolute_uri(obj.image.url)
         return None
 
     def get_gallery_images(self, obj):
         """Return the full URLs of the gallery images."""
-        return ['http://127.0.0.1:8000' + gallery.image.url for gallery in obj.gallery_produits.all()]
+        request = self.context.get('request')
+        return [request.build_absolute_uri(gallery.image.url) for gallery in obj.gallery_produits.all()]
