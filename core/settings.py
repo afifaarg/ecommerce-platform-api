@@ -28,8 +28,8 @@ SECRET_KEY = os.getenv('SECRET_KEY')
 DEBUG = os.getenv('DEBUG', 'False').lower() == "true"
 
 # Allowed hosts, fetched from environment variables
-ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS').split(' ')
-
+ALLOWED_HOSTS = ['localhost',  '127.0.0.1', 'https://ecommerce-platform-rsx3.onrender.com',
+                 'https://ecommerce-platform-api.onrender.com/', 'ecommerce-platform-api.onrender.com']
 
 
 # Application definition
