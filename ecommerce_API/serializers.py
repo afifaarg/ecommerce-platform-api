@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Newsletter, ProductGallery, Product, Category
+from .models import Newsletter, ProductGallery, Product, Category, Order, ProductInOrder, User
 
 class NewsletterSerializer(serializers.ModelSerializer):
     class Meta:
@@ -56,3 +56,37 @@ class ProductSerializer(serializers.ModelSerializer):
         """Return the full URLs of the gallery images."""
         request = self.context.get('request')
         return [request.build_absolute_uri(gallery.image.url) for gallery in obj.gallery_produits.all()]
+
+class ProductInOrderSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProductInOrder
+        fields = ['product', 'quantity', 'total_price']
+    
+    def validate(self, data):
+        product = data['product']
+        quantity = data['quantity']
+        total_price = product.price * quantity
+       
+        return data
+
+class OrderSerializer(serializers.ModelSerializer):
+    items = ProductInOrderSerializer(many=True, write_only=True)
+    user = serializers.PrimaryKeyRelatedField(queryset=User.objects.all(), required=False, allow_null=True)
+
+    class Meta:
+        model = Order
+        fields = [
+            'id', 'user', 'customer_fullname', 'customer_phonenumber', 'created_at', 'updated_at', 'status', 'total_price',
+            'shipping_address', 'billing_address', 'items'
+        ]
+        read_only_fields = ['created_at', 'updated_at']
+
+    def create(self, validated_data):
+        items_data = validated_data.pop('items')
+
+        order = Order.objects.create(**validated_data)
+
+        for item_data in items_data:
+            ProductInOrder.objects.create(order=order, **item_data)
+
+        return order

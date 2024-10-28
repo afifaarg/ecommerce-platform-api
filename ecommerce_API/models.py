@@ -79,9 +79,32 @@ class ProductInBill(models.Model):
 
 # Order model
 class Order(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-    order_status = models.CharField(max_length=50)  # e.g., 'pending', 'completed', etc.
+    STATUS_CHOICES = [
+        ('En attente', 'En attente'),
+        ('En traitement', 'En traitement'),
+        ('Expédié', 'Expédié'),
+        ('Livré', 'Livré'),
+        ('Annulé', 'Annulé'),
+    ]
+
+    user = models.ForeignKey(
+        User, 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        blank=True
+    )  # Links order to a registered user, or null for guest checkout
+    customer_fullname = models.CharField(max_length=255, blank=True)  # For guest users
+    customer_phonenumber = models.CharField(max_length=255, blank=True)  # For guest users
     created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    status = models.CharField(max_length=15, choices=STATUS_CHOICES, default='En attente')
+    total_price = models.DecimalField(max_digits=10, decimal_places=2)
+    shipping_address = models.CharField(max_length=255)
+    billing_address = models.CharField(max_length=255)
+    payment_status = models.BooleanField(default=False)  # True if payment is completed
+
+    def __str__(self):
+        return f"Order {self.id} by {self.user if self.user else self.customer_fullname or 'Guest'}"
 
 # ProductInOrder model
 class ProductInOrder(models.Model):

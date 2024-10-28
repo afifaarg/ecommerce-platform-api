@@ -58,7 +58,7 @@ class ProductInBillAdmin(admin.ModelAdmin):
 # Customizing the admin for the Order model
 @admin.register(Order)
 class OrderAdmin(admin.ModelAdmin):
-    list_display = ('user', 'order_status', 'created_at')
+    list_display = ('user', 'status', 'created_at')
     search_fields = ('user__username',)
 
 # Customizing the admin for the ProductInOrder model
