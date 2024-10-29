@@ -1,7 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import User
 
-# User model with roles and additional information
+
 class User(User):
     ROLE_CHOICES = (
         ('admin', 'Admin'),
@@ -11,16 +11,10 @@ class User(User):
     role = models.CharField(max_length=10, choices=ROLE_CHOICES, default='customer')
     
     # Additional user information
+    full_name = models.CharField(max_length=35, blank=True, null=True)
     phone_number = models.CharField(max_length=15, blank=True, null=True)
     address = models.CharField(max_length=255, blank=True, null=True)
-    city = models.CharField(max_length=100, blank=True, null=True)
-    state = models.CharField(max_length=100, blank=True, null=True)
-    postal_code = models.CharField(max_length=10, blank=True, null=True)
-    country = models.CharField(max_length=100, blank=True, null=True)
-    date_of_birth = models.DateField(blank=True, null=True)
-    profile_picture = models.ImageField(upload_to='profile_pictures/', blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return self.username

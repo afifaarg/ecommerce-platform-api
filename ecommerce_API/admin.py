@@ -20,7 +20,7 @@ from .models import (
 # Customizing the admin for the User model
 @admin.register(User)
 class UserAdmin(admin.ModelAdmin):
-    list_display = ('username', 'email', 'role', 'phone_number', 'created_at', 'updated_at')
+    list_display = ('username', 'email', 'role', 'phone_number', 'created_at')
     search_fields = ('username', 'email')
     list_filter = ('role',)
 
