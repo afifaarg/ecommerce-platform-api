@@ -1,7 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import User
 
-# User model with roles and additional information
+
 class User(User):
     ROLE_CHOICES = (
         ('admin', 'Admin'),
@@ -11,16 +11,10 @@ class User(User):
     role = models.CharField(max_length=10, choices=ROLE_CHOICES, default='customer')
     
     # Additional user information
+    full_name = models.CharField(max_length=35, blank=True, null=True)
     phone_number = models.CharField(max_length=15, blank=True, null=True)
     address = models.CharField(max_length=255, blank=True, null=True)
-    city = models.CharField(max_length=100, blank=True, null=True)
-    state = models.CharField(max_length=100, blank=True, null=True)
-    postal_code = models.CharField(max_length=10, blank=True, null=True)
-    country = models.CharField(max_length=100, blank=True, null=True)
-    date_of_birth = models.DateField(blank=True, null=True)
-    profile_picture = models.ImageField(upload_to='profile_pictures/', blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return self.username
@@ -88,9 +82,32 @@ class ProductInBill(models.Model):
 
 # Order model
 class Order(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-    order_status = models.CharField(max_length=50)  # e.g., 'pending', 'completed', etc.
+    STATUS_CHOICES = [
+        ('En attente', 'En attente'),
+        ('En traitement', 'En traitement'),
+        ('Expédié', 'Expédié'),
+        ('Livré', 'Livré'),
+        ('Annulé', 'Annulé'),
+    ]
+
+    user = models.ForeignKey(
+        User, 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        blank=True
+    )  # Links order to a registered user, or null for guest checkout
+    customer_fullname = models.CharField(max_length=255, blank=True)  # For guest users
+    customer_phonenumber = models.CharField(max_length=255, blank=True)  # For guest users
     created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    status = models.CharField(max_length=15, choices=STATUS_CHOICES, default='En attente')
+    total_price = models.DecimalField(max_digits=10, decimal_places=2)
+    shipping_address = models.CharField(max_length=255)
+    billing_address = models.CharField(max_length=255)
+    payment_status = models.BooleanField(default=False)  # True if payment is completed
+
+    def __str__(self):
+        return f"Order {self.id} by {self.user if self.user else self.customer_fullname or 'Guest'}"
 
 # ProductInOrder model
 class ProductInOrder(models.Model):

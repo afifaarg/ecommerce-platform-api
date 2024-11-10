@@ -22,10 +22,12 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # SECURITY WARNING: keep the secret key used in production secret!
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.getenv('SECRET_KEY')
+# SECRET_KEY = os.getenv('SECRET_KEY') for production
+SECRET_KEY ="1080297972j2hj2hk2hlhlh"    
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.getenv('DEBUG', 'False').lower() == "true"
+# DEBUG = "os.getenv('DEBUG', 'False').lower() == "true" production
+DEBUG = True
 
 # Allowed hosts, fetched from environment variables
 ALLOWED_HOSTS = ['localhost',  '127.0.0.1', 'https://ecommerce-platform-rsx3.onrender.com',
@@ -44,6 +46,7 @@ INSTALLED_APPS = [
 
     # My App
     'rest_framework',
+    'rest_framework_simplejwt',
     'corsheaders',
     'ecommerce_API',
 ]
@@ -52,10 +55,9 @@ REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.AllowAny',  # Allow any user to access
     ],
-    'DEFAULT_AUTHENTICATION_CLASSES': [
-        'rest_framework.authentication.SessionAuthentication',
-        'rest_framework.authentication.BasicAuthentication',
-    ],
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ),
 }
 
 MIDDLEWARE = [
