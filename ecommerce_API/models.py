@@ -30,7 +30,7 @@ class User(User):
 class Category(models.Model):
     name = models.CharField(max_length=255, unique=True)
     description = models.TextField(blank=True, null=True)
-
+    created_at = models.DateTimeField(auto_now_add=True, null=True, blank=True)
     def __str__(self):
         return self.name
 
@@ -45,6 +45,7 @@ class Product(models.Model):
     margin = models.DecimalField(max_digits=10, decimal_places=2)
     tva = models.DecimalField(max_digits=5, decimal_places=2, default=0.00)
     image = models.ImageField(upload_to='produit_images/')
+    promo_video = models.FileField(upload_to='promo_videos/', null=True, blank=True)
     in_stock = models.BooleanField(default=True)
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -57,7 +58,15 @@ class Product(models.Model):
 class ProductGallery(models.Model):
     image = models.ImageField(upload_to='produit_images/')
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name="gallery_produits", default=None, null=True, blank=True)
-    
+
+class ProductVariant(models.Model):
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name="variants")
+    dimension = models.CharField(max_length=50, blank=True, null=True)
+    color = models.CharField(max_length=50, blank=True, null=True)
+    variant_price = models.DecimalField(max_digits=10, decimal_places=2)
+
+    def __str__(self):
+        return f"{self.product.name} - {self.color} {self.dimension}"
 # BuyingBill model
 class BuyingBill(models.Model):
     bill_id = models.CharField(max_length=50, unique=True)
