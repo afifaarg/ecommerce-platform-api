@@ -1,7 +1,7 @@
 from rest_framework import viewsets, status
 from rest_framework.views import APIView
-from .models import Newsletter, Product, Order, ProductInOrder, User, Category, ProductVariant
-from .serializers import NewsletterSerializer, ProductSerializer, OrderSerializer, UserSerializer, CategorySerializer
+from .models import Newsletter, Product, Order, ProductInOrder, User, Category, ProductVariant, BuyingBill, ProductInBill, Contact
+from .serializers import NewsletterSerializer, ProductSerializer, OrderSerializer,ContactSerializer,  UserSerializer, CategorySerializer,ProductInBillSerializer,BuyingBillSerializer
 from rest_framework.response import Response
 from django.contrib.auth import authenticate
 from rest_framework_simplejwt.tokens import RefreshToken  # Optional, for JWT
@@ -106,6 +106,10 @@ class ProductViewSet(viewsets.ModelViewSet):
         
         return super().create(request, *args, **kwargs)
     
+    def update(self, request, *args, **kwargs):
+        print(self.request.POST)
+        return super().update(request, *args, **kwargs)
+
 class NewsletterViewSet(viewsets.ModelViewSet):
     queryset = Newsletter.objects.all()
     serializer_class = NewsletterSerializer
@@ -120,12 +124,8 @@ class OrderViewSet(viewsets.ModelViewSet):
     serializer_class = OrderSerializer
 
     def create(self, request, *args, **kwargs):
-        # Use the serializer to validate and create an order
-        print('hello')
         serializer = self.get_serializer(data=request.data)
-        print("hello1")
         serializer.is_valid(raise_exception=True)
-        print("hello2")
         # Create the order instance
         order = serializer.save()
 
@@ -142,3 +142,16 @@ class OrderViewSet(viewsets.ModelViewSet):
 
         # Return the created order instance
         return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    def update(self, request, *args, **kwargs):
+        print("hello")
+        return super().update(request, *args, **kwargs)
+    
+# BuyingBill ViewSet
+class BuyingBillViewSet(viewsets.ModelViewSet):
+    queryset = BuyingBill.objects.all()
+    serializer_class = BuyingBillSerializer
+
+class ContactViewSet(viewsets.ModelViewSet):
+    queryset = Contact.objects.all()
+    serializer_class = ContactSerializer

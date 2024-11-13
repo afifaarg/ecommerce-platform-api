@@ -10,7 +10,6 @@ from .models import (
     ProductInOrder,
     Cart,
     CartItem,
-    ReturnBill,
     HomeCarouselSection,
     FAQ,
     Newsletter,
@@ -78,12 +77,6 @@ class CartAdmin(admin.ModelAdmin):
 class CartItemAdmin(admin.ModelAdmin):
     list_display = ('cart', 'product', 'quantity')
     search_fields = ('cart__user__username', 'product__name')
-
-# Customizing the admin for the ReturnBill model
-@admin.register(ReturnBill)
-class ReturnBillAdmin(admin.ModelAdmin):
-    list_display = ('order', 'bill_id', 'return_reason', 'refunded', 'created_at')
-    search_fields = ('bill_id',)
 
 # Customizing the admin for the HomeCarouselSection model
 @admin.register(HomeCarouselSection)
