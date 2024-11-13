@@ -197,11 +197,12 @@ class OrderSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         items_data = validated_data.pop('items')
 
-        order = Order.objects.create(**validated_data)
-
+        order = Order.objects.create(total_price = 0, **validated_data)
+        totalPrice = 0
         for item_data in items_data:
-            ProductInOrder.objects.create(order=order, **item_data)
-
+            productInstance =ProductInOrder.objects.create(order=order, **item_data)
+            totalPrice += productInstance.total_price
+        order.total_price = totalPrice
         return order
 
     def update(self, instance, validated_data):
