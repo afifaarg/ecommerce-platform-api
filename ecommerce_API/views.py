@@ -14,6 +14,7 @@ import json
 class LogoutView(APIView):
     def post(self, request):
         refresh_token = request.data.get("refresh_token")  # Get refresh token from the request body
+        print(request.data)
         if not refresh_token:
             return Response({"error": "Refresh token is required"}, status=status.HTTP_400_BAD_REQUEST)
 
