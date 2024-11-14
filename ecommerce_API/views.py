@@ -1,7 +1,7 @@
 from rest_framework import viewsets, status
 from rest_framework.views import APIView
-from .models import Newsletter, Product, Order, ProductInOrder, User, Category, ProductVariant, BuyingBill, ProductInBill, Contact
-from .serializers import NewsletterSerializer, ProductSerializer, OrderSerializer,ContactSerializer,  UserSerializer, CategorySerializer,ProductInBillSerializer,BuyingBillSerializer
+from .models import Newsletter, Product, Order, Client,Fournisseur, ProductInOrder, User, Category, ProductVariant, BuyingBill, ProductInBill, Contact
+from .serializers import NewsletterSerializer, ClientSerializer, FournisseurSerializer, ProductSerializer, OrderSerializer,ContactSerializer,  UserSerializer, CategorySerializer,ProductInBillSerializer,BuyingBillSerializer
 from rest_framework.response import Response
 from django.contrib.auth import authenticate
 from rest_framework_simplejwt.tokens import RefreshToken  # Optional, for JWT
@@ -118,8 +118,7 @@ class NewsletterViewSet(viewsets.ModelViewSet):
 class CategoriesViewSet(viewsets.ModelViewSet):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
-    
-    
+     
 class OrderViewSet(viewsets.ModelViewSet):
     queryset = Order.objects.all()
     serializer_class = OrderSerializer
@@ -127,28 +126,15 @@ class OrderViewSet(viewsets.ModelViewSet):
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        # Create the order instance
         order = serializer.save()
 
-        # Handle creating ProductInOrder instances
-        items_data = request.data.get('items', [])
-        for item_data in items_data:
-            # Ensure to include the order reference while creating ProductInOrder
-            ProductInOrder.objects.create(
-                order=order,
-                product_id=item_data['product'],  # Assuming product is passed as ID
-                quantity=item_data['quantity'],
-                total_price=item_data['total_price'],
-            )
-
-        # Return the created order instance
+     
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     def update(self, request, *args, **kwargs):
         print("hello")
         return super().update(request, *args, **kwargs)
     
-# BuyingBill ViewSet
 class BuyingBillViewSet(viewsets.ModelViewSet):
     queryset = BuyingBill.objects.all()
     serializer_class = BuyingBillSerializer
@@ -156,3 +142,11 @@ class BuyingBillViewSet(viewsets.ModelViewSet):
 class ContactViewSet(viewsets.ModelViewSet):
     queryset = Contact.objects.all()
     serializer_class = ContactSerializer
+
+class FournisseurViewSet(viewsets.ModelViewSet):
+    queryset = Fournisseur.objects.all()
+    serializer_class = FournisseurSerializer
+
+class ClientsViewSet(viewsets.ModelViewSet):
+    queryset = Client.objects.all()
+    serializer_class = ClientSerializer

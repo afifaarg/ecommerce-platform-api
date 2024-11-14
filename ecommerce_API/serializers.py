@@ -1,9 +1,10 @@
 from rest_framework import serializers
-from .models import Newsletter, ProductGallery, Product, Category, Order, ProductInOrder, Contact, User, ProductVariant, BuyingBill, ProductInBill
+from .models import Newsletter, Fournisseur, Client, ProductGallery, Product, Category, Order, ProductInOrder, Contact, User, ProductVariant, BuyingBill, ProductInBill
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.core.exceptions import ObjectDoesNotExist
 import json
 from django.db import transaction
+from decimal import Decimal
 
 class BlacklistTokenSerializer(serializers.Serializer):
     refresh_token = serializers.CharField()
@@ -43,7 +44,6 @@ class ContactSerializer(serializers.ModelSerializer):
     class Meta:
         model = Contact
         fields = ['id', 'nom', 'email', 'message', 'etat']
-
 
 class ProductGallerySerializer(serializers.ModelSerializer):
     class Meta:
@@ -180,17 +180,16 @@ class ProductSerializer(serializers.ModelSerializer):
         return instance
     
 class ProductInOrderSerializer(serializers.ModelSerializer):
-    product_name = serializers.CharField(source='product.name', read_only=True)  # Assuming 'name' is a field on Product model
-    product_reference = serializers.CharField(source='product.reference', read_only=True)  # Assuming 'name' is a field on Product model
-    prix_unitaire = serializers.DecimalField(source='product.price', max_digits=10, decimal_places=2, read_only=True)
-    total_price = serializers.SerializerMethodField()  # Calculated field
+    product = serializers.PrimaryKeyRelatedField(queryset=Product.objects.all())
+    product_reference = serializers.CharField(source='product.reference', read_only=True)
+    product_name = serializers.CharField(source='product.name', read_only=True)
+    unit_price = serializers.DecimalField(max_digits=10, decimal_places=2)
+    total_price = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
 
     class Meta:
         model = ProductInOrder
-        fields = ['product_reference','product_name', 'prix_unitaire', 'quantity', 'total_price']
+        fields = ['product', 'product_reference', 'product_name', 'quantity', 'unit_price', 'total_price']
 
-    def get_total_price(self, obj):
-        return obj.product.price * obj.quantity
 
 class OrderSerializer(serializers.ModelSerializer):
     items = ProductInOrderSerializer(many=True)
@@ -199,42 +198,85 @@ class OrderSerializer(serializers.ModelSerializer):
     class Meta:
         model = Order
         fields = [
-            'id', 'user', 'customer_fullname', 'customer_phonenumber', 'created_at', 'updated_at', 'status', 'total_price',
-            'shipping_address', 'billing_address', 'items'
+            'id', 'user', 'client', 'customer_fullname', 'customer_phonenumber', 'created_at', 'updated_at', 'status', 
+            'shipping_address', 'billing_address', 'items', 'total_price'
         ]
         read_only_fields = ['created_at', 'updated_at']
 
+    @transaction.atomic
     def create(self, validated_data):
         items_data = validated_data.pop('items')
+        # validated_data.pop('total_price', None)  # Remove total_price if it exists
+        
+        # Check if the customer_fullname matches an existing client
+        customer_fullname = validated_data.get('customer_fullname')
+        client = None
+        if customer_fullname:
+            try:
+                client = Client.objects.get(name=customer_fullname)
+                validated_data['client'] = client  # Associate the client with the order
+            except Client.DoesNotExist:
+                print(f"Client with fullname {customer_fullname} not found.")
+        
+        # Create the order
+        order = Order.objects.create(**validated_data)
+        total_price = Decimal('0.00')
 
-        order = Order.objects.create(total_price = 0, **validated_data)
-        totalPrice = 0
+        # Utiliser un ensemble pour traquer les produits déjà ajoutés
+        seen_products = set()
+
         for item_data in items_data:
-            productInstance =ProductInOrder.objects.create(order=order, **item_data)
-            totalPrice += productInstance.total_price
-        order.total_price = totalPrice
+            product = item_data['product']
+            if product.id in seen_products:
+                print(f"Duplicate item detected for product ID: {product.id}")
+                continue  # Skip duplicate item
+
+            # Ajouter l'ID du produit à l'ensemble pour suivre les produits ajoutés
+            seen_products.add(product.id)
+
+            # Calculer les prix et créer ProductInOrder
+            quantity = item_data.get('quantity', 1)
+            unit_price = Decimal(item_data['unit_price'])
+            item_total_price = quantity * unit_price
+
+            # Créer une instance de ProductInOrder avec les valeurs correctes
+            ProductInOrder.objects.create(order=order, product=product, quantity=quantity, unit_price=unit_price, total_price=item_total_price)
+
+            # Mettre à jour le prix total de la commande
+            total_price += item_total_price
+
+    
         return order
 
     def update(self, instance, validated_data):
-        # Update simple fields, including status
+        # Mettre à jour les champs de base
         for attr, value in validated_data.items():
-            if attr != 'items':  # Avoid updating items directly in this loop
+            if attr != 'items':  # Ne pas mettre à jour items dans cette boucle
                 setattr(instance, attr, value)
         instance.save()
 
-        # Handle items if provided
+        # Mettre à jour les items si fournis
         items_data = validated_data.get('items')
         if items_data is not None:
-            # Clear existing items and re-add new items
+            # Supprimer les articles existants et ajouter les nouveaux
             instance.items.all().delete()
             for item_data in items_data:
                 ProductInOrder.objects.create(order=instance, **item_data)
 
         return instance
-    
-# Serializer for BuyingBill
-from rest_framework import serializers
-from .models import BuyingBill, ProductInBill, Product
+
+
+class FournisseurSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Fournisseur
+        fields = ['id', 'name', 'email', 'phone', 'address']
+    read_only_fields = ['created_at']
+
+class ClientSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Client
+        fields = ['id', 'name', 'email', 'phone', 'address']
+    read_only_fields = ['created_at']
 
 class ProductInBillSerializer(serializers.ModelSerializer):
     product = serializers.PrimaryKeyRelatedField(queryset=Product.objects.all())  # Accept product ID directly

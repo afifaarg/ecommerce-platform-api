@@ -62,14 +62,32 @@ class ProductVariant(models.Model):
     def __str__(self):
         return f"{self.product.name} - {self.color} {self.dimension}"
 
+class Fournisseur(models.Model):
+    name = models.CharField(max_length=100)
+    email = models.EmailField(unique=True)
+    phone = models.CharField(max_length=15)
+    address = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True, null=True, blank=True)
+    def __str__(self):
+        return self.name
+    
+class Client(models.Model):
+    name = models.CharField(max_length=100)
+    email = models.EmailField(unique=True)
+    phone = models.CharField(max_length=15)
+    address = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True, null=True, blank=True)
+    def __str__(self):
+        return self.name
+    
 # BuyingBill model
 class BuyingBill(models.Model):
     bill_id = models.CharField(max_length=50, unique=True)
     date = models.DateTimeField(auto_now_add=True)
-    payment_method = models.CharField(max_length=50, null=True, blank=True, default="")  # Example: 'credit_card', 'cash', etc.
+    payment_method = models.CharField(max_length=50, null=True, blank=True, default="") 
     is_paid = models.BooleanField(default=False)
     total_amount = models.DecimalField(max_digits=10, decimal_places=2)
-    fournisseur = models.CharField(max_length=250)  # Assuming a Fournisseur model exists
+    fournisseur = models.ForeignKey(Fournisseur, on_delete=models.CASCADE, null=True, blank=True, default=None)
 
     def __str__(self):
         return self.bill_id
@@ -96,6 +114,13 @@ class Order(models.Model):
         null=True, 
         blank=True
     )  # Links order to a registered user, or null for guest checkout
+    client = models.ForeignKey(
+        Client, 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        blank=True,
+        default=None
+    )  # Links order to a registered user, or null for guest checkout
     customer_fullname = models.CharField(max_length=255, blank=True)  # For guest users
     customer_phonenumber = models.CharField(max_length=255, blank=True)  # For guest users
     created_at = models.DateTimeField(auto_now_add=True)
@@ -114,6 +139,7 @@ class ProductInOrder(models.Model):
     order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name="items")
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
     quantity = models.PositiveIntegerField()
+    unit_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True, default="0.00")
     total_price = models.DecimalField(max_digits=10, decimal_places=2)
 
 # Cart model
