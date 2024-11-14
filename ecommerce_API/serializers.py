@@ -65,7 +65,7 @@ class ProductSerializer(serializers.ModelSerializer):
     category = serializers.PrimaryKeyRelatedField(queryset=Category.objects.all())  # Ensure it's an ID
     image = serializers.SerializerMethodField()
     variants = ProductVariantSerializer(many=True, required=False) 
-
+    available_quantity = serializers.SerializerMethodField()
     class Meta:
         model = Product
         fields = [
@@ -86,6 +86,7 @@ class ProductSerializer(serializers.ModelSerializer):
             'promo_video',
             'gallery_images',
             'variants',  # Include variant details if you have a Variant model
+            'available_quantity',
         ]
         extra_kwargs = {
             'variants': {'required': False},
@@ -104,6 +105,15 @@ class ProductSerializer(serializers.ModelSerializer):
         request = self.context.get('request')
         return [request.build_absolute_uri(gallery.image.url) for gallery in obj.gallery_produits.all()]
 
+    def get_available_quantity(self, obj):
+        # Calculate total quantity bought (from BuyingBill) and quantity sold (from Orders)
+        total_quantity_bought = sum(item.quantity for item in obj.productinbill_set.all())
+        total_quantity_sold = sum(item.quantity for item in obj.productinorder_set.all())
+
+        # Calculate available quantity
+        available_quantity = total_quantity_bought - total_quantity_sold
+        return max(available_quantity, 0)  # Ensure it doesn’t go below zero
+    
     def create(self, validated_data):
         # Get the gallery images from the request
         gallery_images = self.context['request'].FILES.getlist('gallery_images')
