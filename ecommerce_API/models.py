@@ -180,12 +180,17 @@ class Contact(models.Model):
         return f"{self.nom} - {self.etat}"
     
 class HomeCarouselSection(models.Model):
-    image_desktop = models.ImageField(upload_to='carousel_images/')
-    image_phone = models.ImageField(upload_to='carousel_images/')
-    text = models.CharField(max_length=255)
-    link = models.URLField()
-    header = models.CharField(max_length=255)
+    file = models.FileField(
+        upload_to='carousel_files/', 
+        help_text="Upload an image or video.",
+        default=""
+    )
+    title = models.CharField(max_length=25, blank=True, null=True, default="")
     show = models.BooleanField(default=True)
+    dateAjout = models.DateTimeField( auto_now=True)
+
+    def __str__(self):
+        return self.header
 
 # FAQ model
 class FAQ(models.Model):

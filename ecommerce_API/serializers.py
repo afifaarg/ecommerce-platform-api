@@ -1,10 +1,11 @@
 from rest_framework import serializers
-from .models import Newsletter, Fournisseur, Client, ProductGallery, Product, Category, Order, ProductInOrder, Contact, User, ProductVariant, BuyingBill, ProductInBill
+from .models import Newsletter, Fournisseur, Client, ProductGallery, HomeCarouselSection, Product, Category, Order, ProductInOrder, Contact, User, ProductVariant, BuyingBill, ProductInBill
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.core.exceptions import ObjectDoesNotExist
 import json
 from django.db import transaction
 from decimal import Decimal
+
 
 class BlacklistTokenSerializer(serializers.Serializer):
     refresh_token = serializers.CharField()
@@ -20,7 +21,34 @@ class BlacklistTokenSerializer(serializers.Serializer):
             token.blacklist()
         except Exception as e:
             self.fail('bad_token')
-            
+
+    
+class HomeCarouselSectionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = HomeCarouselSection
+        file = serializers.SerializerMethodField()
+        fields = ['id','file', 'title', 'show', 'dateAjout']
+        read_only_fields = ['dateAjout']  # dateAjout will be automatically set
+
+    def create(self, validated_data):
+        # Retrieve the uploaded file from the request context
+        request = self.context.get('request')
+        print(request.FILES)
+        file = request.FILES.get('file')  # Retrieve the 'file' from FILES
+
+        # Add the file to the validated data if it exists
+        if file:
+            validated_data['file'] = file
+
+        # Create and return the HomeCarouselSection instance
+        instance = HomeCarouselSection.objects.create(**validated_data)
+        return instance
+    
+    def get_image(self, obj):
+        request = self.context.get('request')
+        if obj.file:
+            return request.build_absolute_uri(obj.file.url)
+        return None
 class NewsletterSerializer(serializers.ModelSerializer):
     class Meta:
         model = Newsletter

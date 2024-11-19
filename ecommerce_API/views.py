@@ -1,7 +1,7 @@
 from rest_framework import viewsets, status
 from rest_framework.views import APIView
-from .models import Newsletter, Product, Order, Client,Fournisseur, ProductInOrder, User, Category, ProductVariant, BuyingBill, ProductInBill, Contact
-from .serializers import NewsletterSerializer, ClientSerializer, FournisseurSerializer, ProductSerializer, OrderSerializer,ContactSerializer,  UserSerializer, CategorySerializer,ProductInBillSerializer,BuyingBillSerializer
+from .models import Newsletter, Product, Order, HomeCarouselSection, Client,Fournisseur, ProductInOrder, User, Category, ProductVariant, BuyingBill, ProductInBill, Contact
+from .serializers import NewsletterSerializer,HomeCarouselSectionSerializer, ClientSerializer, FournisseurSerializer, ProductSerializer, OrderSerializer,ContactSerializer,  UserSerializer, CategorySerializer,ProductInBillSerializer,BuyingBillSerializer
 from rest_framework.response import Response
 from django.contrib.auth import authenticate
 from rest_framework_simplejwt.tokens import RefreshToken  # Optional, for JWT
@@ -111,6 +111,10 @@ class ProductViewSet(viewsets.ModelViewSet):
         print(self.request.POST)
         return super().update(request, *args, **kwargs)
 
+class HomeCarouselSectionViewSet(viewsets.ModelViewSet):
+    queryset = HomeCarouselSection.objects.all()
+    serializer_class = HomeCarouselSectionSerializer
+    
 class NewsletterViewSet(viewsets.ModelViewSet):
     queryset = Newsletter.objects.all()
     serializer_class = NewsletterSerializer
@@ -127,12 +131,9 @@ class OrderViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         order = serializer.save()
-
-     
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     def update(self, request, *args, **kwargs):
-        print("hello")
         return super().update(request, *args, **kwargs)
     
 class BuyingBillViewSet(viewsets.ModelViewSet):

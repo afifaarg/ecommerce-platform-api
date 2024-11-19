@@ -81,8 +81,8 @@ class CartItemAdmin(admin.ModelAdmin):
 # Customizing the admin for the HomeCarouselSection model
 @admin.register(HomeCarouselSection)
 class HomeCarouselSectionAdmin(admin.ModelAdmin):
-    list_display = ('header', 'text', 'show')
-    search_fields = ('header',)
+    list_display = ('title', 'dateAjout', 'show')
+    search_fields = ('title',)
 
 # Customizing the admin for the FAQ model
 @admin.register(FAQ)
