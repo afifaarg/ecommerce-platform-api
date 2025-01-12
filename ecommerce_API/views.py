@@ -128,8 +128,18 @@ class OrderViewSet(viewsets.ModelViewSet):
     serializer_class = OrderSerializer
 
     def create(self, request, *args, **kwargs):
+        print("here")
         serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
+        print("here1")
+        try:
+            serializer.is_valid(raise_exception=True)
+        except ValidationError as e:
+            print(e.detail)  # Log or print detailed error messages
+        print("here2")
+        serializer = OrderSerializer(data=request.data)
+        if not serializer.is_valid():
+            print("helo",serializer.errors)  # Log the detailed error
+            return Response(serializer.errors, status=400)
         order = serializer.save()
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 

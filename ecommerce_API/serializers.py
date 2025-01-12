@@ -90,7 +90,7 @@ class ProductVariantSerializer(serializers.ModelSerializer):
 
 class ProductSerializer(serializers.ModelSerializer):
     gallery_images = serializers.SerializerMethodField()
-    category = serializers.PrimaryKeyRelatedField(queryset=Category.objects.all())  # Ensure it's an ID
+    category = serializers.SerializerMethodField() # Ensure it's an ID
     image = serializers.SerializerMethodField()
     variants = ProductVariantSerializer(many=True, required=False) 
     available_quantity = serializers.SerializerMethodField()
@@ -212,12 +212,11 @@ class ProductInOrderSerializer(serializers.ModelSerializer):
     product_reference = serializers.CharField(source='product.reference', read_only=True)
     product_name = serializers.CharField(source='product.name', read_only=True)
     unit_price = serializers.DecimalField(max_digits=10, decimal_places=2)
-    total_price = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
+    total_price = serializers.DecimalField(max_digits=10, decimal_places=2)
 
     class Meta:
         model = ProductInOrder
         fields = ['product', 'product_reference', 'product_name', 'quantity', 'unit_price', 'total_price']
-
 
 class OrderSerializer(serializers.ModelSerializer):
     items = ProductInOrderSerializer(many=True)
@@ -234,64 +233,68 @@ class OrderSerializer(serializers.ModelSerializer):
     @transaction.atomic
     def create(self, validated_data):
         items_data = validated_data.pop('items')
-        # validated_data.pop('total_price', None)  # Remove total_price if it exists
-        
-        # Check if the customer_fullname matches an existing client
         customer_fullname = validated_data.get('customer_fullname')
         client = None
+        
         if customer_fullname:
             try:
                 client = Client.objects.get(name=customer_fullname)
-                validated_data['client'] = client  # Associate the client with the order
+                validated_data['client'] = client
             except Client.DoesNotExist:
                 print(f"Client with fullname {customer_fullname} not found.")
-        
-        # Create the order
+
         order = Order.objects.create(**validated_data)
         total_price = Decimal('0.00')
-
-        # Utiliser un ensemble pour traquer les produits déjà ajoutés
         seen_products = set()
 
         for item_data in items_data:
             product = item_data['product']
             if product.id in seen_products:
                 print(f"Duplicate item detected for product ID: {product.id}")
-                continue  # Skip duplicate item
+                continue
 
-            # Ajouter l'ID du produit à l'ensemble pour suivre les produits ajoutés
             seen_products.add(product.id)
 
-            # Calculer les prix et créer ProductInOrder
             quantity = item_data.get('quantity', 1)
+            if quantity < 0:
+                raise serializers.ValidationError({"quantity": "Quantity cannot be less than 0."})
+
             unit_price = Decimal(item_data['unit_price'])
             item_total_price = quantity * unit_price
 
-            # Créer une instance de ProductInOrder avec les valeurs correctes
-            ProductInOrder.objects.create(order=order, product=product, quantity=quantity, unit_price=unit_price, total_price=item_total_price)
+            ProductInOrder.objects.create(
+                order=order, 
+                product=product, 
+                quantity=quantity, 
+                unit_price=unit_price, 
+                total_price=item_total_price
+            )
 
-            # Mettre à jour le prix total de la commande
             total_price += item_total_price
 
-    
+        order.total_price = total_price
+        order.save()
         return order
 
+    @transaction.atomic
     def update(self, instance, validated_data):
-        # Mettre à jour les champs de base
         for attr, value in validated_data.items():
-            if attr != 'items':  # Ne pas mettre à jour items dans cette boucle
+            if attr != 'items':
                 setattr(instance, attr, value)
         instance.save()
 
-        # Mettre à jour les items si fournis
         items_data = validated_data.get('items')
         if items_data is not None:
-            # Supprimer les articles existants et ajouter les nouveaux
             instance.items.all().delete()
             for item_data in items_data:
+                quantity = item_data.get('quantity', 1)
+                if quantity < 0:
+                    raise serializers.ValidationError({"quantity": "Quantity cannot be less than 0."})
+
                 ProductInOrder.objects.create(order=instance, **item_data)
 
         return instance
+
 
 
 class FournisseurSerializer(serializers.ModelSerializer):

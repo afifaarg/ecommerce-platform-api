@@ -140,7 +140,7 @@ class ProductInOrder(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
     quantity = models.PositiveIntegerField()
     unit_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True, default="0.00")
-    total_price = models.DecimalField(max_digits=10, decimal_places=2)
+    total_price = models.DecimalField(max_digits=10, decimal_places=2,null=True, blank=True, default="0.00")
 
 # Cart model
 class Cart(models.Model):
