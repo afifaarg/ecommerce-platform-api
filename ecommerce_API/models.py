@@ -31,7 +31,7 @@ class Category(models.Model):
 # Product model
 class Product(models.Model):
     name = models.CharField(max_length=255)
-    category = models.ForeignKey(Category, on_delete=models.CASCADE)  # Reference to Category model
+    category = models.ForeignKey(Category, on_delete=models.CASCADE) 
     description = models.TextField()
     reference = models.TextField()
     price = models.DecimalField(max_digits=10, decimal_places=2)

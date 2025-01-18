@@ -90,7 +90,7 @@ class ProductVariantSerializer(serializers.ModelSerializer):
 
 class ProductSerializer(serializers.ModelSerializer):
     gallery_images = serializers.SerializerMethodField()
-    category = serializers.SerializerMethodField() # Ensure it's an ID
+    category_name = serializers.SerializerMethodField() # Ensure it's an ID
     image = serializers.SerializerMethodField()
     variants = ProductVariantSerializer(many=True, required=False) 
     available_quantity = serializers.SerializerMethodField()
@@ -100,6 +100,7 @@ class ProductSerializer(serializers.ModelSerializer):
             'id',
             'name',
             'category',
+            'category_name',
             'description',
             'reference',
             'price',
@@ -120,19 +121,20 @@ class ProductSerializer(serializers.ModelSerializer):
             'variants': {'required': False},
         }
 
-    def get_category(self, obj):
+    def get_category_name(self, obj):
         return obj.category.name  # Return the category name, if needed
 
-    def get_image(self, obj):
-        request = self.context.get('request')
-        if obj.image:
-            return request.build_absolute_uri(obj.image.url)
-        return None
+    
 
     def get_gallery_images(self, obj):
         request = self.context.get('request')
         return [request.build_absolute_uri(gallery.image.url) for gallery in obj.gallery_produits.all()]
-
+    
+    def get_image(self, obj):
+            request = self.context.get('request')
+            if obj.gallery_produits:
+                return [request.build_absolute_uri(gallery.image.url) for gallery in obj.gallery_produits.all()][0]
+            return None
     def get_available_quantity(self, obj):
         # Calculate total quantity bought (from BuyingBill) and quantity sold (from Orders)
         total_quantity_bought = sum(item.quantity for item in obj.productinbill_set.all())
@@ -294,8 +296,6 @@ class OrderSerializer(serializers.ModelSerializer):
                 ProductInOrder.objects.create(order=instance, **item_data)
 
         return instance
-
-
 
 class FournisseurSerializer(serializers.ModelSerializer):
     class Meta:

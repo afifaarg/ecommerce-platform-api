@@ -108,12 +108,20 @@ class ProductViewSet(viewsets.ModelViewSet):
         return super().create(request, *args, **kwargs)
     
     def update(self, request, *args, **kwargs):
-        print(self.request.POST)
+
         return super().update(request, *args, **kwargs)
 
 class HomeCarouselSectionViewSet(viewsets.ModelViewSet):
-    queryset = HomeCarouselSection.objects.all()
     serializer_class = HomeCarouselSectionSerializer
+    def get_queryset(self):
+        show = self.request.query_params.get('show', None)
+
+        queryset = HomeCarouselSection.objects.all()
+
+        if show is not None:  
+            queryset = queryset.filter(show=show.lower() == 'true')
+
+        return queryset
     
 class NewsletterViewSet(viewsets.ModelViewSet):
     queryset = Newsletter.objects.all()
