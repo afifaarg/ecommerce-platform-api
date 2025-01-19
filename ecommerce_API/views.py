@@ -1,7 +1,7 @@
 from rest_framework import viewsets, status
 from rest_framework.views import APIView
-from .models import Newsletter, Product, Order, HomeCarouselSection, Client,Fournisseur, ProductInOrder, User, Category, ProductVariant, BuyingBill, ProductInBill, Contact
-from .serializers import NewsletterSerializer,HomeCarouselSectionSerializer, ClientSerializer, FournisseurSerializer, ProductSerializer, OrderSerializer,ContactSerializer,  UserSerializer, CategorySerializer,ProductInBillSerializer,BuyingBillSerializer
+from .models import Newsletter, Product, Order,InformationMarketing, FAQ, HomeCarouselSection, Client,Fournisseur, ProductInOrder, User, Category, ProductVariant, BuyingBill, ProductInBill, Contact
+from .serializers import NewsletterSerializer, InformationMarketingSerializer, FAQSerializer, HomeCarouselSectionSerializer, ClientSerializer, FournisseurSerializer, ProductSerializer, OrderSerializer,ContactSerializer,  UserSerializer, CategorySerializer,ProductInBillSerializer,BuyingBillSerializer
 from rest_framework.response import Response
 from django.contrib.auth import authenticate
 from rest_framework_simplejwt.tokens import RefreshToken  # Optional, for JWT
@@ -11,6 +11,48 @@ from rest_framework.permissions import IsAuthenticated
 from django.db import transaction
 from rest_framework.exceptions import ValidationError
 import json
+from django.db.models import Sum
+import datetime
+from django.http import JsonResponse
+
+def dashboard_data(request):
+    # Get the total number of clients
+    total_clients = Client.objects.count() + User.objects.filter(role="customer").count()
+
+    # Get the total number of orders (commandes)
+    total_orders = Order.objects.count()
+
+    # Get the total number of contact forms submitted
+    total_contact_forms = Contact.objects.count()  # Assuming 'ouvert' means open/form submitted
+
+    # Get the monthly income (sum of total_amount in Order for each month)
+    current_year = datetime.datetime.now().year
+    monthly_income = []
+    for month in range(1, 13):
+        monthly_income.append(
+            Order.objects.filter(created_at__year=current_year, created_at__month=month).aggregate(
+                total_income=Sum('total_price'))['total_income'] or 0
+        )
+
+    # Get the monthly payments (sum of total_price in ProductInBill for each month)
+    monthly_payments = []
+    for month in range(1, 13):
+        monthly_payments.append(
+            ProductInBill.objects.filter(
+                bill__date__year=current_year, bill__date__month=month).aggregate(
+                total_payment=Sum('total_price'))['total_payment'] or 0
+        )
+
+    # Prepare the data to return
+    data = {
+        'clients': total_clients,
+        'commandes': total_orders,
+        'income': monthly_income,
+        'payments': monthly_payments,
+        'formulaireContact': total_contact_forms,
+    }
+
+    return JsonResponse(data)
 class LogoutView(APIView):
     def post(self, request):
         refresh_token = request.data.get("refresh_token")  # Get refresh token from the request body
@@ -123,6 +165,23 @@ class HomeCarouselSectionViewSet(viewsets.ModelViewSet):
 
         return queryset
     
+class FAQViewSet(viewsets.ModelViewSet):
+    serializer_class = FAQSerializer
+    def get_queryset(self):
+        show = self.request.query_params.get('show', None)
+
+        queryset = FAQ.objects.all()
+
+        if show is not None:  
+            queryset = queryset.filter(show=show.lower() == 'true')
+
+        return queryset
+
+class InformationMarketingViewSet(viewsets.ModelViewSet):
+    queryset = InformationMarketing.objects.all()
+    serializer_class = InformationMarketingSerializer
+
+
 class NewsletterViewSet(viewsets.ModelViewSet):
     queryset = Newsletter.objects.all()
     serializer_class = NewsletterSerializer

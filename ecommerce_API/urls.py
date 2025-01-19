@@ -1,6 +1,6 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from .views import NewsletterViewSet, HomeCarouselSectionViewSet, ProductViewSet,ClientsViewSet, FournisseurViewSet, OrderViewSet,UserViewSet, ContactViewSet, LoginView, LogoutView, CategoriesViewSet, BuyingBillViewSet
+from .views import dashboard_data, NewsletterViewSet, FAQViewSet,InformationMarketingViewSet, HomeCarouselSectionViewSet, ProductViewSet,ClientsViewSet, FournisseurViewSet, OrderViewSet,UserViewSet, ContactViewSet, LoginView, LogoutView, CategoriesViewSet, BuyingBillViewSet
 
 router = DefaultRouter()
 router.register('newsletters', NewsletterViewSet)
@@ -13,9 +13,12 @@ router.register('contact', ContactViewSet, basename='contact')
 router.register('fournisseurs', FournisseurViewSet, basename='fournisseurs')
 router.register('clients', ClientsViewSet, basename='clients')
 router.register('banners', HomeCarouselSectionViewSet, basename='banners')
+router.register('faqSection', FAQViewSet, basename='faqSection')
+router.register('maketingInfo', InformationMarketingViewSet, basename='maketingInfo')
 
 urlpatterns = [
     path('', include(router.urls)),
     path('login/', LoginView.as_view()),
     path('logout/', LogoutView.as_view()),
+    path('dashboard/', dashboard_data, name='dashboard_data'),
 ]

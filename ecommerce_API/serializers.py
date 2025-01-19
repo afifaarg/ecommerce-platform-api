@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Newsletter, Fournisseur, Client, ProductGallery, HomeCarouselSection, Product, Category, Order, ProductInOrder, Contact, User, ProductVariant, BuyingBill, ProductInBill
+from .models import Newsletter, Fournisseur,InformationMarketing, FAQ, Client, ProductGallery, HomeCarouselSection, Product, Category, Order, ProductInOrder, Contact, User, ProductVariant, BuyingBill, ProductInBill
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.core.exceptions import ObjectDoesNotExist
 import json
@@ -21,7 +21,6 @@ class BlacklistTokenSerializer(serializers.Serializer):
             token.blacklist()
         except Exception as e:
             self.fail('bad_token')
-
     
 class HomeCarouselSectionSerializer(serializers.ModelSerializer):
     class Meta:
@@ -49,6 +48,40 @@ class HomeCarouselSectionSerializer(serializers.ModelSerializer):
         if obj.file:
             return request.build_absolute_uri(obj.file.url)
         return None
+    
+class InformationMarketingSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = InformationMarketing
+        file = serializers.SerializerMethodField()
+        fields = ['id','logo', 'lienFacebook', 'lienInstagram', 'lienTiktok']
+   
+
+    def create(self, validated_data):
+        # Retrieve the uploaded file from the request context
+        request = self.context.get('request')
+
+        file = request.FILES.get('logo')  # Retrieve the 'file' from FILES
+
+        # Add the file to the validated data if it exists
+        if file:
+            validated_data['logo'] = file
+
+        # Create and return the HomeCarouselSection instance
+        instance = InformationMarketing.objects.create(**validated_data)
+        return instance
+    
+    def get_image(self, obj):
+        request = self.context.get('request')
+        if obj.file:
+            return request.build_absolute_uri(obj.file.url)
+        return None
+    
+class FAQSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = FAQ
+ 
+        fields = ['id','question', 'answer', 'show']
+
 class NewsletterSerializer(serializers.ModelSerializer):
     class Meta:
         model = Newsletter
@@ -79,10 +112,28 @@ class ProductGallerySerializer(serializers.ModelSerializer):
         fields = ['image']
 
 class CategorySerializer(serializers.ModelSerializer):
+    image = serializers.SerializerMethodField()
+
     class Meta:
         model = Category
-        fields = ['id','name','description']
+        fields = ['id', 'name', 'description', 'image']
 
+    def get_image(self, obj):
+        request = self.context.get('request')
+        if obj.image:
+            return request.build_absolute_uri(obj.image.url)
+        return None
+
+    def create(self, validated_data):
+        # Extract the uploaded image from the request
+        request = self.context['request']
+        image = request.FILES.get('image')  # Use 'get' to retrieve a single file
+
+        # Create the category instance
+        category = Category.objects.create(**validated_data, image=image)
+
+        return category
+    
 class ProductVariantSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProductVariant

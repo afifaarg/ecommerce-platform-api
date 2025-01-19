@@ -24,6 +24,7 @@ class User(User):
 class Category(models.Model):
     name = models.CharField(max_length=255, unique=True)
     description = models.TextField(blank=True, null=True)
+    image = models.ImageField(upload_to='produit_images/')
     created_at = models.DateTimeField(auto_now_add=True, null=True, blank=True)
     def __str__(self):
         return self.name
@@ -178,6 +179,16 @@ class Contact(models.Model):
 
     def __str__(self):
         return f"{self.nom} - {self.etat}"
+    
+class InformationMarketing(models.Model):
+    logo = models.FileField(
+        upload_to='logo_files/', 
+        help_text="Upload an image.",
+        default=""
+    )
+    lienFacebook = models.CharField(max_length=25, blank=True, null=True, default="")
+    lienInstagram = models.CharField(max_length=25, blank=True, null=True, default="")
+    lienTiktok = models.CharField(max_length=25, blank=True, null=True, default="")
     
 class HomeCarouselSection(models.Model):
     file = models.FileField(
