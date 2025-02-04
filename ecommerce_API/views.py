@@ -14,6 +14,7 @@ import json
 from django.db.models import Sum
 import datetime
 from django.http import JsonResponse
+from django.core.exceptions import ObjectDoesNotExist
 
 def dashboard_data(request):
     # Get the total number of clients
@@ -55,16 +56,19 @@ def dashboard_data(request):
     return JsonResponse(data)
 class LogoutView(APIView):
     def post(self, request):
-        refresh_token = request.data.get("refresh_token")  # Get refresh token from the request body
-        print(request.data)
+        refresh_token = request.data.get("refresh_token")
+        print(f"Received Token: {refresh_token}")
+
         if not refresh_token:
             return Response({"error": "Refresh token is required"}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
-            # Blacklist the refresh token
             token = RefreshToken(refresh_token)
+            print(f"Decoded Token: {token}")
             token.blacklist()
             return Response(status=status.HTTP_205_RESET_CONTENT)
+        except ObjectDoesNotExist:
+            return Response({"error": "Token not found or already blacklisted"}, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
         
@@ -133,7 +137,45 @@ class LoginView(APIView):
             'access': str(refresh.access_token),
             'user_data': response_data
         }, status=status.HTTP_200_OK)
+
+
+class AdminLoginView(APIView):
+    def post(self, request, *args, **kwargs):
+        username = request.data.get("username")
+        password = request.data.get("password")
+
+        if username is None or password is None:
+            return Response({'error': 'Please provide both username and password'}, status=status.HTTP_400_BAD_REQUEST)
+
+        user = authenticate(username=username, password=password)
+        if not user :  # Ensure user has admin role
+            return Response({'error': 'Invalid Credentials or not an admin'}, status=status.HTTP_401_UNAUTHORIZED)
+        admin_info = User.objects.get(username=username)
+        if admin_info.role != 'admin':  # Ensure user has admin role
+            return Response({'error': 'Invalid Credentials or not an admin'}, status=status.HTTP_401_UNAUTHORIZED)
+
+        # Generate JWT Token
+        refresh = RefreshToken.for_user(user)
+
+        # Fetch admin information
         
+        
+        response_data = {
+            'username': admin_info.username,
+            'name': admin_info.full_name,
+            'email': admin_info.email,
+            'phone': admin_info.phone_number,
+            'address': admin_info.address,
+            'role': admin_info.role
+        }
+
+        return Response({
+            'message': 'Admin login successful!',
+            'refresh': str(refresh),
+            'access': str(refresh.access_token),
+            'user_data': response_data
+        }, status=status.HTTP_200_OK)
+      
 class ProductViewSet(viewsets.ModelViewSet):
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
@@ -224,6 +266,12 @@ class ContactViewSet(viewsets.ModelViewSet):
 class FournisseurViewSet(viewsets.ModelViewSet):
     queryset = Fournisseur.objects.all()
     serializer_class = FournisseurSerializer
+    def post(self, request):
+        serializer = FournisseurSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class ClientsViewSet(viewsets.ModelViewSet):
     queryset = Client.objects.all()

@@ -65,7 +65,7 @@ class ProductVariant(models.Model):
 
 class Fournisseur(models.Model):
     name = models.CharField(max_length=100)
-    email = models.EmailField(unique=True)
+    email = models.EmailField(unique=False, default="", null=True, blank=True)
     phone = models.CharField(max_length=15)
     address = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True, null=True, blank=True)

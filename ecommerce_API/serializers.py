@@ -351,8 +351,8 @@ class OrderSerializer(serializers.ModelSerializer):
 class FournisseurSerializer(serializers.ModelSerializer):
     class Meta:
         model = Fournisseur
-        fields = ['id', 'name', 'email', 'phone', 'address']
-    read_only_fields = ['created_at']
+        fields = ['id', 'name', 'email', 'phone', 'address', 'created_at']  # Include created_at
+        read_only_fields = ['created_at']
 
 class ClientSerializer(serializers.ModelSerializer):
     class Meta:

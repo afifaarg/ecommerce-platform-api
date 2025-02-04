@@ -27,7 +27,7 @@ SECRET_KEY ="1080297972j2hj2hk2hlhlh"
 
 # SECURITY WARNING: don't run with debug turned on in production!
 # DEBUG = "os.getenv('DEBUG', 'False').lower() == "true" production
-DEBUG = True
+DEBUG = False
 
 # Allowed hosts, fetched from environment variables
 ALLOWED_HOSTS = ['localhost',  '127.0.0.1', 'https://ecommerce-platform-rsx3.onrender.com',
@@ -47,9 +47,12 @@ INSTALLED_APPS = [
     # My App
     'rest_framework',
     'rest_framework_simplejwt',
+    'rest_framework_simplejwt.token_blacklist',
     'corsheaders',
     'ecommerce_API',
 ]
+
+
 
 REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
@@ -62,6 +65,7 @@ REST_FRAMEWORK = {
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -91,7 +95,7 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'core.wsgi.application'
 
-
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
@@ -138,8 +142,8 @@ CORS_ALLOW_ALL_ORIGINS = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
 
-STATIC_URL = 'static/'
-
+STATIC_URL = '/static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')  # Ensure this is set
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
