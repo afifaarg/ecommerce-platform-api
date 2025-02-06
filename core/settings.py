@@ -27,11 +27,10 @@ SECRET_KEY ="1080297972j2hj2hk2hlhlh"
 
 # SECURITY WARNING: don't run with debug turned on in production!
 # DEBUG = "os.getenv('DEBUG', 'False').lower() == "true" production
-DEBUG = False
+DEBUG = True
 
 # Allowed hosts, fetched from environment variables
-ALLOWED_HOSTS = ['localhost',  '127.0.0.1', 'https://ecommerce-platform-rsx3.onrender.com',
-                 'https://ecommerce-platform-api.onrender.com/', 'ecommerce-platform-api.onrender.com']
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
@@ -95,7 +94,7 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'core.wsgi.application'
 
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+# STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
@@ -109,7 +108,24 @@ DATABASES = {
 
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
-
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'file': {
+            'level': 'DEBUG',  # Log level (can be DEBUG, INFO, WARNING, ERROR, CRITICAL)
+            'class': 'logging.FileHandler',
+            'filename': 'logfile.log',  # Full path to your log file
+        },
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['file'],
+            'level': 'DEBUG',  # Log level (can be adjusted as needed)
+            'propagate': True,
+        },
+    },
+}
 AUTH_PASSWORD_VALIDATORS = [
     {
         'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
@@ -143,7 +159,7 @@ CORS_ALLOW_ALL_ORIGINS = True
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
 
 STATIC_URL = '/static/'
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')  # Ensure this is set
+# STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')  # Ensure this is set
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
